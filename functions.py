@@ -1,16 +1,16 @@
 import numpy as np
 from scipy.special import softmax
 
-learning_rate = 0.1
+learning_rate = 0.5
 
-def activation_func(x):
-  return 1 / (1 + np.exp(-x))
 
-def activation_func_derivative(z):
-    activ_z = activation_func(z)
-    return activ_z * (1 - activ_z)
-    
-mapper_sigma = np.vectorize(activation_func)
+def relu(x):
+    return np.maximum(0, x)
+
+mapper_relu = np.vectorize(relu)
+
+def relu_derivative(x):
+    return np.where(x <= 0, 0, 1)
 
 def softmax_derivative(z):
     softmax_z = softmax(z)
@@ -29,12 +29,11 @@ def calculate_dot(inputs, weights):
 
 def predict(inputs, fl_weights, sl_weights):
     inputs_1 = calculate_dot(inputs, fl_weights)
-    outputs_1 = mapper_sigma(inputs_1)
+    outputs_1 = relu(inputs_1)
     
     inputs_2 = calculate_dot(outputs_1, sl_weights)
     outputs_2 = softmax(inputs_2)
     return outputs_2
-    
 
 def calc_weight_output(cur_weights, output, delta):
     calc_weights = np.empty((0, len(output)))
@@ -51,20 +50,23 @@ def calc_hidden_delta(outputs, sl_weights, sl_delta):
     for output in outputs:
         row_counter = 0
         weight = sl_weights[:, row_counter]
-        delta = activation_func_derivative(output) * (weight * sl_delta)
-        hidden_delta = np.append(hidden_delta, delta.sum())
-    print(hidden_delta)    
+        delta = relu_derivative(output) * (weight * sl_delta)
+        hidden_delta = np.append(hidden_delta, delta.sum())  
     return hidden_delta 
             
-            
-        
+def calc_new_weights(delta_weights, old_weights):
+    new_weights = []
+    for delta, old_weight in zip(delta_weights, old_weights):
+        new_weight = old_weight * delta * learning_rate
+        new_weights.append(new_weight)   
+    return np.array(new_weights) 
 
 def train(inputs, expected_predict, fl_weights, sl_weights):
     expected_list = np.zeros(41)
     expected_list[expected_predict] = 1
     
     inputs_1 = calculate_dot(inputs, fl_weights)
-    outputs_1 = mapper_sigma(inputs_1)
+    outputs_1 = mapper_relu(inputs_1)
     
     inputs_2 = calculate_dot(outputs_1, sl_weights)
     outputs_2 = softmax(inputs_2)
@@ -73,10 +75,12 @@ def train(inputs, expected_predict, fl_weights, sl_weights):
     sl_weights_delta = sl_error_layer * softmax_derivative(inputs_2)
     #Above is correct
     
-    
     fl_weights_delta = calc_hidden_delta(outputs_1, sl_weights, sl_weights_delta)
-    
-    return 0
+
+    calc_sl_weights = calc_new_weights(sl_weights_delta, sl_weights)
+    calc_fl_weights = calc_new_weights(fl_weights_delta, fl_weights)
+
+    return calc_fl_weights, calc_sl_weights
     
     
     
