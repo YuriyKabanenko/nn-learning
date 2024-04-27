@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 
 import functions as func
@@ -27,17 +26,14 @@ y_encoded = label_encoder.fit_transform(y)
 epochs = 1
 
 #Weights
-fl_weights = np.random.normal(0.0, 5, (10, 132))
-sl_weights = np.random.normal(0.0, 5, (41, 10))
+fl_weights = np.round(np.random.normal(0.0, 2, (10, 132)), 5)
+sl_weights = np.round(np.random.normal(0.0, 2, (41, 10)), 5)
 
 unique_elements, counts = np.unique(y_encoded, return_counts=True)
-
-func.train(x[0], y_encoded[0], fl_weights, sl_weights)
 
 inputs_ = []
 correct_predictions = []
 model_prediction = []
-
 
 for e in range(epochs):
   i = 0

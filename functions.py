@@ -3,7 +3,6 @@ from scipy.special import softmax
 
 learning_rate = 0.5
 
-
 def relu(x):
     return np.maximum(0, x)
 
@@ -54,12 +53,13 @@ def calc_hidden_delta(outputs, sl_weights, sl_delta):
         hidden_delta = np.append(hidden_delta, delta.sum())  
     return hidden_delta 
             
-def calc_new_weights(delta_weights, old_weights):
+def calc_new_weights(weights_delta, old_weights):
     new_weights = []
-    for delta, old_weight in zip(delta_weights, old_weights):
-        new_weight = old_weight * delta * learning_rate
+    for delta, old_weight in zip(weights_delta, old_weights):
+        new_weight = np.array(delta) + np.array(old_weight)
         new_weights.append(new_weight)   
-    return np.array(new_weights) 
+    new_weights = np.array(new_weights)  
+    return new_weights
 
 def train(inputs, expected_predict, fl_weights, sl_weights):
     expected_list = np.zeros(41)
@@ -70,16 +70,23 @@ def train(inputs, expected_predict, fl_weights, sl_weights):
     
     inputs_2 = calculate_dot(outputs_1, sl_weights)
     outputs_2 = softmax(inputs_2)
+    
+    print('sl_weights', sl_weights)
+    
     #Second error layer
     sl_error_layer = outputs_2 - expected_list
-    sl_weights_delta = sl_error_layer * softmax_derivative(inputs_2)
+    sl_neuron_delta = sl_error_layer * softmax_derivative(inputs_2)
+    sl_weights_delta = calc_weight_output(sl_weights, outputs_1, sl_neuron_delta)
+    
+    calc_sl_weights = calc_new_weights(sl_weights_delta, sl_weights)
+    
     #Above is correct
     
-    fl_weights_delta = calc_hidden_delta(outputs_1, sl_weights, sl_weights_delta)
-
-    calc_sl_weights = calc_new_weights(sl_weights_delta, sl_weights)
-    calc_fl_weights = calc_new_weights(fl_weights_delta, fl_weights)
-
+    fl_neuron_delta = calc_hidden_delta(outputs_1, sl_weights, sl_neuron_delta)
+    calc_fl_weights = calc_new_weights(fl_neuron_delta, fl_weights)
+    print('calc_fl_weights: ', calc_fl_weights)
+    print('calc_sl_weights: ', calc_sl_weights)
+    
     return calc_fl_weights, calc_sl_weights
     
     
