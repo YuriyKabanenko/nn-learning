@@ -51,7 +51,9 @@ print('sl_weights: ', sl_weights)
 for val in x_test:
     model_prediction.append(func.predict(val,fl_weights, sl_weights))
     
+max_indexes = np.argmax(model_prediction, axis=1)     
 
+decoded_labels = label_encoder.inverse_transform(max_indexes)
  
        
       
